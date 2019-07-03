@@ -25,6 +25,12 @@ pub fn main() {
     let path_cache = path::Cache::new();
 
     let line = input.read_line().unwrap();
-    terminal.write(line).unwrap();
-    terminal.write('\n').unwrap();
+    let words: Vec<&str> = line.split_whitespace().collect();
+    if words.len() > 0 {
+        let bin = words.get(0).unwrap();
+        if path_cache.has(bin.to_string()) {
+            let bin_path = path_cache.get_path(bin.to_string());
+            println!("Executing {}", bin_path);
+        }
+    }
 }

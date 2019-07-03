@@ -33,4 +33,12 @@ impl Cache {
 
         cache
     }
+
+    pub fn has(&self, name: String) -> bool {
+        self.map.get(&name).is_some()
+    }
+
+    pub fn get_path(&self, name: String) -> &String {
+        self.map.get(&name).ok_or(String::new()).unwrap()
+    }
 }
