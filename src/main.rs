@@ -1,3 +1,5 @@
+mod path;
+
 extern crate crossterm;
 
 use crossterm::{Color, Crossterm};
@@ -16,6 +18,11 @@ pub fn main() {
         .style("Black text on green background")
         .with(Color::Black)
         .on(Color::Green);
+
+    let (w, h) = terminal.terminal_size();
+    println!("Terminal size: {}x{}", w, h);
+
+    let path_cache = path::Cache::new();
 
     let line = input.read_line().unwrap();
     terminal.write(line).unwrap();
