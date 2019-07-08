@@ -1,5 +1,4 @@
 use crossterm::{InputEvent, KeyEvent};
-use std::io::{self, Write};
 use std::process::Command;
 
 pub struct Shell {
@@ -17,11 +16,16 @@ impl Shell {
         }
     }
 
+    pub fn init(&self) {
+        self.term.clear(crossterm::ClearType::All).unwrap();
+        self.update_line();
+    }
+
     fn line_buf_as_string(&self) -> String {
         self.line_buf.clone().into_iter().collect()
     }
 
-    fn update_line(&mut self) {
+    fn update_line(&self) {
         // Re-set the current line
         self.term.write('\r').unwrap();
         self.term.write(self.prompt.clone()).unwrap();
@@ -32,6 +36,17 @@ impl Shell {
 
     fn is_end_of_line(&mut self) -> bool {
         self.line_buf.last().unwrap_or(&'x') == &'\n'
+    }
+
+    fn write_string(&self, s: String) {
+        self.term.write('\r').unwrap();
+        for line in s.split('\n') {
+            if line.is_empty() {
+                return;
+            }
+            self.term.write(line).unwrap();
+            self.term.write("\r\n").unwrap();
+        }
     }
 
     fn execute_line(&mut self) {
@@ -47,15 +62,15 @@ impl Shell {
         }
         match cmd.output() {
             Ok(out) => {
-                io::stdout().write_all(&out.stdout).unwrap();
-                io::stderr().write_all(&out.stderr).unwrap();
+                self.write_string(String::from_utf8(out.stdout).unwrap());
+                self.write_string(String::from_utf8(out.stderr).unwrap());
             }
             Err(e) => {
                 self.term.write(e).unwrap();
             }
         }
         self.line_buf.clear();
-        self.term.write('\n').unwrap();
+        self.update_line();
     }
 
     pub fn process_key_event(&mut self, input_event: InputEvent) {

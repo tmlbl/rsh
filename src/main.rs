@@ -15,6 +15,8 @@ pub fn main() {
 
         let mut stdin = input.read_sync();
 
+        shell.init();
+
         loop {
             let event = stdin.next();
             if let Some(input_event) = event {
