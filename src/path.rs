@@ -42,3 +42,16 @@ impl Cache {
         self.map.get(&name).ok_or(String::new()).unwrap()
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_has() {
+        let mut cache = Cache::new();
+        assert_eq!(cache.has(String::from("foo")), false);
+        cache.map.insert(String::from("foo"), String::from("bar"));
+        assert_eq!(cache.has(String::from("foo")), true);
+    }
+}
