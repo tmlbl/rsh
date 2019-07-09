@@ -5,6 +5,8 @@ pub struct Shell {
     prompt: String,
     term: crossterm::Terminal,
     line_buf: Vec<char>,
+    history: Vec<String>,
+    history_index: usize,
 }
 
 impl Shell {
@@ -13,6 +15,8 @@ impl Shell {
             prompt,
             term: crossterm::terminal(),
             line_buf: Vec::new(),
+            history: Vec::new(),
+            history_index: 0,
         }
     }
 
@@ -27,6 +31,7 @@ impl Shell {
 
     fn update_line(&self) {
         // Re-set the current line
+        self.term.clear(crossterm::ClearType::CurrentLine).unwrap();
         self.term.write('\r').unwrap();
         self.term.write(self.prompt.clone()).unwrap();
         self.term.write(" ").unwrap();
@@ -66,11 +71,31 @@ impl Shell {
                 self.write_string(String::from_utf8(out.stderr).unwrap());
             }
             Err(e) => {
-                self.term.write(e).unwrap();
+                self.write_string(format!("{}", e));
             }
         }
+        self.history.push(self.line_buf_as_string());
         self.line_buf.clear();
+        self.history_index = 0;
         self.update_line();
+    }
+
+    fn go_to_history_line(&mut self) {
+        self.line_buf.clear();
+        let mut index = 0;
+        if self.history_index <= self.history.len() {
+            index = self.history.len() - self.history_index;
+        }
+        match self.history.get(index) {
+            Some(line) => {
+                for c in line.chars() {
+                    if c != '\n' {
+                        self.line_buf.push(c);
+                    }
+                }
+            }
+            None => (),
+        }
     }
 
     pub fn process_key_event(&mut self, input_event: InputEvent) {
@@ -83,6 +108,16 @@ impl Shell {
                 KeyEvent::Char(c) => self.line_buf.push(c),
                 KeyEvent::Backspace => {
                     self.line_buf.pop();
+                }
+                KeyEvent::Up => {
+                    self.history_index = self.history_index + 1;
+                    self.go_to_history_line();
+                }
+                KeyEvent::Down => {
+                    if self.history_index > 0 {
+                        self.history_index = self.history_index - 1;
+                    }
+                    self.go_to_history_line();
                 }
                 _ => (),
             },
